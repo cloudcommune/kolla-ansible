@@ -32,6 +32,11 @@ defaults
     balance {{ haproxy_defaults_balance }}
     maxconn {{ haproxy_defaults_max_connections }}
 
+peers kolla_peers
+{% for host in groups['haproxy'] %}
+    peer {{ host }} {{ 'api' | kolla_address(host) }}:1024
+{% endfor %}
+
 listen stats
    bind {{ api_interface_address }}:{{ haproxy_stats_port }}
    mode http

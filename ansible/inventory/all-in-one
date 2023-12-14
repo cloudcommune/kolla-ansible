@@ -259,10 +259,6 @@ control
 # function appropriately. For example, neutron-metadata-agent must run on the
 # same host as the l3-agent and (depending on configuration) the dhcp-agent.
 
-# Elasticsearch Curator
-[elasticsearch-curator:children]
-elasticsearch
-
 # Glance
 [glance-api:children]
 glance
@@ -297,6 +293,12 @@ nova
 control
 
 [neutron-dhcp-agent:children]
+neutron
+
+[neutron-l2gateway-agent:children]
+l2gateway-agent
+
+[l2gateway-agent]
 neutron
 
 [neutron-l3-agent:children]

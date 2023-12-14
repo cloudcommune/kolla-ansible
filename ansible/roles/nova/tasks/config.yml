@@ -76,3 +76,6 @@
   with_dict: "{{ nova_services }}"
   notify:
     - "Restart {{ item.key }} container"
+
+- include_tasks: check-containers.yml
+  when: kolla_action != "config"

@@ -20,7 +20,17 @@ import mock
 from kolla_ansible import exception
 from kolla_ansible import filters
 
-from kolla_ansible.tests.unit.helpers import _to_bool
+
+def _to_bool(value):
+    """Simplified version of the bool filter.
+
+    Avoids having a dependency on Ansible in unit tests.
+    """
+    if value == 'yes':
+        return True
+    if value == 'no':
+        return False
+    return bool(value)
 
 
 class TestFilters(unittest.TestCase):
@@ -94,14 +104,14 @@ class TestFilters(unittest.TestCase):
         service = {
             'group': 'foo'
         }
-        context = self._make_context({'group_names': ['foo', 'bar']})
+        context = self._make_context({'groups': ['foo', 'bar']})
         self.assertTrue(filters.service_mapped_to_host(context, service))
 
     def test_service_mapped_to_host_not_in_group(self):
         service = {
             'group': 'foo'
         }
-        context = self._make_context({'group_names': ['bar']})
+        context = self._make_context({'groups': ['bar']})
         self.assertFalse(filters.service_mapped_to_host(context, service))
 
     def test_service_mapped_to_host_no_attr(self):

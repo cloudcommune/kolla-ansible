@@ -4,6 +4,7 @@
   vars:
     service_ks_register_auth: "{{ openstack_ceilometer_auth }}"
     service_ks_register_users: "{{ ceilometer_ks_users }}"
+  tags: always
 
 - name: Associate the ResellerAdmin role and ceilometer user
   become: true
@@ -18,4 +19,21 @@
       endpoint_type: "{{ openstack_interface }}"
       cacert: "{{ openstack_cacert }}"
   when: enable_swift | bool
+  run_once: True
+
+- name: Associate the admin role and monasca user
+  become: true
+  kolla_toolbox:
+    module_name: "os_user_role"
+    module_args:
+      project: "admin"
+      user: "monasca"
+      role: "{{ item }}"
+      region_name: "{{ openstack_region_name }}"
+      auth: "{{ openstack_ceilometer_auth }}"
+      endpoint_type: "{{ openstack_interface }}"
+      cacert: "{{ openstack_cacert }}"
+  loop:
+    - "monasca-read-only-user"
+    - "agent"
   run_once: True

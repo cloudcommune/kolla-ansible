@@ -4,3 +4,4 @@
   vars:
     service_ks_register_auth: "{{ openstack_kuryr_auth }}"
     service_ks_register_users: "{{ kuryr_ks_users }}"
+  tags: always

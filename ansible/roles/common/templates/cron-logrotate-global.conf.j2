@@ -1,6 +1,6 @@
-weekly
+daily
 
-rotate 6
+rotate 45
 
 copytruncate
 
@@ -10,15 +10,14 @@ delaycompress
 
 notifempty
 
+dateext
+
 missingok
 
-minsize 30M
+minsize 10M
 
-maxsize 100M
+maxsize 200M
 
 su root kolla
 
-{% for service in cron_logrotate_enabled_services %}
-{% include "cron-logrotate-" ~ service ~ ".conf.j2" %}
-
-{% endfor %}
+include /etc/logrotate.d

@@ -41,3 +41,6 @@
   with_dict: "{{ tempest_services }}"
   notify:
     - Restart tempest container
+
+- include_tasks: check-containers.yml
+  when: kolla_action != "config"

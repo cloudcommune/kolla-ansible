@@ -13,6 +13,11 @@
   with_dict: "{{ monasca_services }}"
 
 - name: Copying over config.json files for services
+  vars:
+    skip_services:
+      - monasca-persister
+      - monasca-persister-1
+      - monasca-persister-2
   template:
     src: "{{ item.key }}/{{ item.key }}.json.j2"
     dest: "{{ node_config_directory }}/{{ item.key }}/config.json"
@@ -21,9 +26,27 @@
   when:
     - inventory_hostname in groups[item.value.group]
     - item.value.enabled | bool
+    - item.key not in skip_services
   with_dict: "{{ monasca_services }}"
   notify:
     - "Restart {{ item.key }} container"
+
+- name: Copying over config.json files for monasca-persister
+  vars:
+    need_copy_services:
+      - monasca-persister
+      - monasca-persister-1
+      - monasca-persister-2
+  template:
+    src: "{{ item.key }}/monasca-persister.json.j2"
+    dest: "{{ node_config_directory }}/{{ item.key }}/config.json"
+    mode: "0660"
+  become: true
+  with_dict: "{{ monasca_services }}"
+  when:
+    - inventory_hostname in groups[item.value.group]
+    - item.value.enabled | bool
+    - item.key in need_copy_services
 
 - name: Copying over monasca-agent-collector config
   vars:
@@ -394,6 +417,44 @@
   notify:
     - Restart monasca-persister container
 
+- name: Copying over monasca-persister-1 config
+  vars:
+    service: "{{ monasca_services['monasca-persister-1'] }}"
+  merge_configs:
+    sources:
+      - "{{ role_path }}/templates/monasca-persister-1/{{ item }}.j2"
+      - "{{ node_custom_config }}/monasca-1/{{ item }}"
+      - "{{ node_custom_config }}/monasca-1/{{ inventory_hostname }}/{{ item }}"
+    dest: "{{ node_config_directory }}/monasca-persister-1/{{ item }}"
+    mode: "0660"
+  become: true
+  with_items:
+    - persister.conf
+  when:
+    - inventory_hostname in groups[service['group']]
+    - service.enabled | bool
+  notify:
+    - Restart monasca-persister container
+
+- name: Copying over monasca-persister-2 config
+  vars:
+    service: "{{ monasca_services['monasca-persister-2'] }}"
+  merge_configs:
+    sources:
+      - "{{ role_path }}/templates/monasca-persister-2/{{ item }}.j2"
+      - "{{ node_custom_config }}/monasca-2/{{ item }}"
+      - "{{ node_custom_config }}/monasca-2{{ inventory_hostname }}/{{ item }}"
+    dest: "{{ node_config_directory }}/monasca-persister-2/{{ item }}"
+    mode: "0660"
+  become: true
+  with_items:
+    - persister.conf
+  when:
+    - inventory_hostname in groups[service['group']]
+    - service.enabled | bool
+  notify:
+    - Restart monasca-persister container
+
 - name: Copying over monasca-grafana config file
   vars:
     service: "{{ monasca_services['monasca-grafana'] }}"
@@ -412,3 +473,6 @@
     - service.enabled | bool
   notify:
     - Restart monasca-grafana container
+
+- include_tasks: check-containers.yml
+  when: kolla_action != "config"

@@ -42,5 +42,5 @@
   notify:
     - Restart mongodb container
 
-- import_tasks: check-containers.yml
+- include_tasks: check-containers.yml
   when: kolla_action != "config"

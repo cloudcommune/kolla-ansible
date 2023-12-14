@@ -6,7 +6,6 @@
     common_options: "{{ docker_common_options }}"
     name: "{{ item.value.container_name }}"
     image: "{{ item.value.image }}"
-    privileged: "{{ item.value.privileged | default(False) }}"
     volumes: "{{ item.value.volumes }}"
     dimensions: "{{ item.value.dimensions }}"
   when:

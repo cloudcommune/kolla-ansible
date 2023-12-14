@@ -35,7 +35,7 @@ neutron_services:
     host_in_groups: >-
       {{
       ( (inventory_hostname in groups['compute'] and nova_compute_virt_type != 'xenapi')
-      or (enable_manila_backend_generic | bool and inventory_hostname in groups['manila-share'])
+      or (enable_manila | bool and inventory_hostname in groups['manila-share'])
       or inventory_hostname in groups['neutron-dhcp-agent']
       or inventory_hostname in groups['neutron-l3-agent']
       or inventory_hostname in groups['neutron-metadata-agent']
@@ -89,6 +89,15 @@ neutron_services:
     host_in_groups: "{{ inventory_hostname in groups['neutron-dhcp-agent'] }}"
     volumes: "{{ neutron_dhcp_agent_default_volumes + neutron_dhcp_agent_extra_volumes }}"
     dimensions: "{{ neutron_dhcp_agent_dimensions }}"
+  neutron-l2gateway-agent:
+    container_name: "neutron_l2gateway_agent"
+    image: "{{ neutron_l2gateway_agent_image_full }}"
+    privileged: True
+    enabled: "{{ neutron_plugin_agent not in [ 'vmware_nsxv', 'vmware_nsxv3' ] }}"
+    group: "neutron-l2gateway-agent"
+    host_in_groups: "{{ inventory_hostname in groups['neutron-l2gateway-agent'] }}"
+    volumes: "{{ neutron_l2gateway_agent_default_volumes + neutron_l2gateway_agent_extra_volumes }}"
+    dimensions: "{{ neutron_l2gateway_agent_dimensions }}"
   neutron-l3-agent:
     container_name: "neutron_l3_agent"
     image: "{{ neutron_l3_agent_image_full }}"
@@ -178,6 +187,10 @@ neutron_dhcp_agent_image: "{{ docker_registry ~ '/' if docker_registry else '' }
 neutron_dhcp_agent_tag: "{{ neutron_tag }}"
 neutron_dhcp_agent_image_full: "{{ neutron_dhcp_agent_image }}:{{ neutron_dhcp_agent_tag }}"
 
+neutron_l2gateway_agent_image: "{{ docker_registry ~ '/' if docker_registry else '' }}{{ docker_namespace }}/{{ kolla_base_distro }}-{{ neutron_install_type }}-neutron-dhcp-agent"
+neutron_l2gateway_agent_tag: "{{ neutron_tag }}"
+neutron_l2gateway_agent_image_full: "{{ neutron_l2gateway_agent_image }}:{{ neutron_l2gateway_agent_tag }}"
+
 neutron_l3_agent_image: "{{ docker_registry ~ '/' if docker_registry else '' }}{{ docker_namespace }}/{{ kolla_base_distro }}-{{ neutron_install_type }}-neutron-l3-agent"
 neutron_l3_agent_tag: "{{ neutron_tag }}"
 neutron_l3_agent_image_full: "{{ neutron_l3_agent_image }}:{{ neutron_l3_agent_tag }}"
@@ -231,6 +244,7 @@ neutron_agent_dimensions: >-
   {{ default_container_dimensions | combine(neutron_agent_dimensions_python2 if distro_python_version is version('3.0', '<') else {}) }}
 
 neutron_dhcp_agent_dimensions: "{{ neutron_agent_dimensions }}"
+neutron_l2gateway_agent_dimensions: "{{ neutron_agent_dimensions }}"
 neutron_l3_agent_dimensions: "{{ neutron_agent_dimensions }}"
 neutron_sriov_agent_dimensions: "{{ neutron_agent_dimensions }}"
 neutron_linuxbridge_agent_dimensions: "{{ neutron_agent_dimensions }}"
@@ -247,15 +261,18 @@ ironic_neutron_agent_dimensions: "{{ default_container_dimensions }}"
 neutron_dhcp_agent_default_volumes:
   - "{{ node_config_directory }}/neutron-dhcp-agent/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "neutron_metadata_socket:/var/lib/neutron/kolla/"
   - "/run/netns:/run/netns:shared"
   - "kolla_logs:/var/log/kolla/"
   - "{{ kolla_dev_repos_directory ~ '/neutron/neutron:/var/lib/kolla/venv/lib/python' ~ distro_python_version ~ '/site-packages/neutron' if neutron_dev_mode | bool else '' }}"
+neutron_l2gateway_agent_default_volumes:
+  - "{{ node_config_directory }}/neutron-l2gateway-agent/:{{ container_config_directory }}/:ro"
+  - "/etc/localtime:/etc/localtime:ro"
+  - "/run/:/run/:shared"
+  - "kolla_logs:/var/log/kolla/"
 neutron_l3_agent_default_volumes:
   - "{{ node_config_directory }}/neutron-l3-agent/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "/lib/modules:/lib/modules:ro"
   - "neutron_metadata_socket:/var/lib/neutron/kolla/"
   - "/run/netns:/run/netns:shared"
@@ -264,69 +281,58 @@ neutron_l3_agent_default_volumes:
 neutron_sriov_agent_default_volumes:
   - "{{ node_config_directory }}/neutron-sriov-agent/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "kolla_logs:/var/log/kolla/"
   - "{{ kolla_dev_repos_directory ~ '/neutron/neutron:/var/lib/kolla/venv/lib/python' ~ distro_python_version ~ '/site-packages/neutron' if neutron_dev_mode | bool else '' }}"
 neutron_linuxbridge_agent_default_volumes:
   - "{{ node_config_directory }}/neutron-linuxbridge-agent/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "/lib/modules:/lib/modules:ro"
   - "kolla_logs:/var/log/kolla/"
   - "{{ kolla_dev_repos_directory ~ '/neutron/neutron:/var/lib/kolla/venv/lib/python' ~ distro_python_version ~ '/site-packages/neutron' if neutron_dev_mode | bool else '' }}"
 neutron_metadata_agent_default_volumes:
   - "{{ node_config_directory }}/neutron-metadata-agent/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "neutron_metadata_socket:/var/lib/neutron/kolla/"
   - "kolla_logs:/var/log/kolla/"
   - "{{ kolla_dev_repos_directory ~ '/neutron/neutron:/var/lib/kolla/venv/lib/python' ~ distro_python_version ~ '/site-packages/neutron' if neutron_dev_mode | bool else '' }}"
 neutron_openvswitch_agent_default_volumes:
   - "{{ node_config_directory }}/neutron-openvswitch-agent/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "/lib/modules:/lib/modules:ro"
-  - "/run/openvswitch:/run/openvswitch:shared"
   - "kolla_logs:/var/log/kolla/"
   - "{{ kolla_dev_repos_directory ~ '/neutron/neutron:/var/lib/kolla/venv/lib/python' ~ distro_python_version ~ '/site-packages/neutron' if neutron_dev_mode | bool else '' }}"
 neutron_server_default_volumes:
   - "{{ node_config_directory }}/neutron-server/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "kolla_logs:/var/log/kolla/"
   - "{{ kolla_dev_repos_directory ~ '/neutron/neutron:/var/lib/kolla/venv/lib/python' ~ distro_python_version ~ '/site-packages/neutron' if neutron_dev_mode | bool else '' }}"
 neutron_bgp_dragent_default_volumes:
   - "{{ node_config_directory }}/neutron-bgp-dragent/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "kolla_logs:/var/log/kolla/"
 neutron_infoblox_ipam_agent_default_volumes:
   - "{{ node_config_directory }}/neutron-infoblox-ipam-agent/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "kolla_logs:/var/log/kolla/"
 neutron_openvswitch_agent_xenapi_default_volumes:
   - "{{ node_config_directory }}/neutron-openvswitch-agent-xenapi/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "/lib/modules:/lib/modules:ro"
-  - "/run/openvswitch:/run/openvswitch:shared"
   - "kolla_logs:/var/log/kolla/"
   - "{{ kolla_dev_repos_directory ~ '/neutron/neutron:/var/lib/kolla/venv/lib/python' ~ distro_python_version ~ '/site-packages/neutron' if neutron_dev_mode | bool else '' }}"
 neutron_metering_agent_default_volumes:
   - "{{ node_config_directory }}/neutron-metering-agent/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "kolla_logs:/var/log/kolla/"
   - "{{ kolla_dev_repos_directory ~ '/neutron/neutron:/var/lib/kolla/venv/lib/python' ~ distro_python_version ~ '/site-packages/neutron' if neutron_dev_mode | bool else '' }}"
 ironic_neutron_agent_default_volumes:
   - "{{ node_config_directory }}/ironic-neutron-agent/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "kolla_logs:/var/log/kolla/"
 
 neutron_extra_volumes: "{{ default_extra_volumes }}"
 neutron_dhcp_agent_extra_volumes: "{{ neutron_extra_volumes }}"
+neutron_l2gateway_agent_extra_volumes: "{{ neutron_extra_volumes }}"
 neutron_l3_agent_extra_volumes: "{{ neutron_extra_volumes }}"
 neutron_sriov_agent_extra_volumes: "{{ neutron_extra_volumes }}"
 neutron_linuxbridge_agent_extra_volumes: "{{ neutron_extra_volumes }}"
@@ -408,6 +414,8 @@ service_plugins:
     enabled: "{{ enable_opendaylight_l3 | bool and enable_opendaylight | bool }}"
   - name: "port_forwarding"
     enabled: "{{ enable_neutron_port_forwarding | bool }}"
+  - name: "networking_l2gw.services.l2gateway.plugin.L2GatewayPlugin"
+    enabled: "{{ enable_neutron_l2gw | bool }}"
 
 neutron_service_plugins: "{{ service_plugins|selectattr('enabled', 'equalto', true)|list }}"
 

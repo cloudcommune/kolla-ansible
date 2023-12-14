@@ -1,11 +1,5 @@
 ---
-- import_tasks: config-host.yml
+- include_tasks: config.yml
 
-- import_tasks: config.yml
-
-- import_tasks: check-containers.yml
-
-# NOTE(yoctozepto): haproxy role handlers should not be flushed early.
-# site.yml handles all haproxy things in a dedicated play.
-# This is to avoid extra haproxy service restart.
-# See: https://bugs.launchpad.net/kolla-ansible/+bug/1875228
+- name: Flush handlers
+  meta: flush_handlers

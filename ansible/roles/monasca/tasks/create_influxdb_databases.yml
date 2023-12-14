@@ -1,0 +1,30 @@
+---
+- name: create mon databases
+  become: true
+  command: >
+    docker exec influxdb influx -host {{ api_interface_address | put_address_in_context('url') }} \
+    -execute 'Create database mon;'
+
+- name: create table databases
+  become: true
+  command: >
+    docker exec influxdb influx -host {{ api_interface_address | put_address_in_context('url') }} \
+    -execute 'alter retention policy "autogen" on "mon" duration 744h replication 1 SHARD DURATION 24h default;'
+
+- name: create policy
+  become: true
+  command: >
+    docker exec influxdb influx -host {{ api_interface_address | put_address_in_context('url') }} \
+    -execute 'create retention policy "900" on "mon"  duration 2232h replication 1 SHARD DURATION 24h;'
+
+- name: create policy
+  become: true
+  command: >
+    docker exec influxdb influx -host {{ api_interface_address | put_address_in_context('url') }} \
+    -execute 'create retention policy "7200" on "mon"  duration 4392h replication 1 SHARD DURATION 24h;'
+
+- name: create policy
+  become: true
+  command: >
+    docker exec influxdb influx -host {{ api_interface_address | put_address_in_context('url') }} \
+    -execute 'create retention policy "86400" on "mon"  duration 17520h replication 1 SHARD DURATION 24h;'

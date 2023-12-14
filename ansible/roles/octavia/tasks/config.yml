@@ -88,10 +88,9 @@
     - inventory_hostname in groups[service.group]
     - service.enabled | bool
   with_items:
-    - client.cert-and-key.pem
-    - client_ca.cert.pem
-    - server_ca.cert.pem
-    - server_ca.key.pem
+    - cakey.pem
+    - ca_01.pem
+    - client.pem
   notify:
     - Restart octavia-worker container
 
@@ -107,10 +106,9 @@
     - inventory_hostname in groups[service.group]
     - service.enabled | bool
   with_items:
-    - client.cert-and-key.pem
-    - client_ca.cert.pem
-    - server_ca.cert.pem
-    - server_ca.key.pem
+    - cakey.pem
+    - ca_01.pem
+    - client.pem
   notify:
     - Restart octavia-housekeeping container
 
@@ -126,9 +124,11 @@
     - inventory_hostname in groups[service.group]
     - service.enabled | bool
   with_items:
-    - client.cert-and-key.pem
-    - client_ca.cert.pem
-    - server_ca.cert.pem
-    - server_ca.key.pem
+    - cakey.pem
+    - ca_01.pem
+    - client.pem
   notify:
     - Restart octavia-health-manager container
+
+- include_tasks: check-containers.yml
+  when: kolla_action != "config"

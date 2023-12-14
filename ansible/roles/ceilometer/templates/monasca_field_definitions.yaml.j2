@@ -1,0 +1,68 @@
+dimensions:
+  - resource_id
+  - project_id
+  - user_id
+  - geolocation
+  - region
+  - availability_zone
+  - type
+  - unit
+  - source
+metadata:
+  common:
+    - display_name
+    - name
+    - instance_host
+  instance:
+    - state
+    - state_description
+  image:
+    - size
+    - status
+  image.size:
+    - size
+    - status
+  image.update:
+    - size
+    - status
+  image.upload:
+    - size
+    - status
+  image.delete:
+    - size
+    - status
+  snapshot:
+    - status
+  snapshot.size:
+    - status
+  volume:
+    - status
+  volume.size:
+    - status
+improve_metadata:
+  common:
+    - instance_id
+  disk.device.allocation:
+    - disk_name
+  disk.device.capacity:
+    - disk_name
+  disk.device.read.bytes:
+    - disk_name
+  disk.device.read.bytes.rate:
+    - disk_name
+  disk.device.read.requests:
+    - disk_name
+  disk.device.read.requests.rate:
+    - disk_name
+  disk.device.usage:
+    - disk_name
+  disk.device.vmused:
+    - disk_name
+  disk.device.write.bytes:
+    - disk_name
+  disk.device.write.bytes.rate:
+    - disk_name
+  disk.device.write.requests:
+    - disk_name
+  disk.device.write.requests.rate:
+    - disk_name

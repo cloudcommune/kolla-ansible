@@ -96,3 +96,6 @@
   with_dict: "{{ mariadb_services }}"
   notify:
     - restart mariadb
+
+- include_tasks: check-containers.yml
+  when: kolla_action != "config"

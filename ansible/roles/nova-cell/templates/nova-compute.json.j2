@@ -14,10 +14,10 @@
             "perm": "0600"
         }{% endif %}{% if nova_backend == "rbd" %},
         {
-            "source": "{{ container_config_directory }}/ceph.*",
+            "source": "{{ container_config_directory }}/ceph*",
             "dest": "/etc/ceph/",
             "owner": "nova",
-            "perm": "0700"
+            "perm": "0600"
         }{% endif %}{% if nova_compute_virt_type == "vmware" and not vmware_vcenter_insecure | bool %},
         {
             "source": "{{ container_config_directory }}/vmware_ca",

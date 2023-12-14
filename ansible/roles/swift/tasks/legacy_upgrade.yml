@@ -1,5 +1,5 @@
 ---
-- import_tasks: config.yml
+- include_tasks: config.yml
 
 # NOTE(pbourke): because the images that are used to start Swift containers
 # were refactored for Mitaka, we need to completely remove the existing
@@ -29,6 +29,6 @@
     - "swift_object_expirer"
     - "swift_proxy_server"
 
-- import_tasks: start.yml
+- include_tasks: start.yml
   vars:
     run_start_swift_proxy_server: "yes"

@@ -1,9 +1,15 @@
 {
-    "command": "neutron-server --config-file /etc/neutron/neutron.conf {% if neutron_plugin_agent in ['openvswitch', 'linuxbridge', 'opendaylight'] %} --config-file /etc/neutron/plugins/ml2/ml2_conf.ini --config-file /etc/neutron/neutron_vpnaas.conf {% elif neutron_plugin_agent in ['vmware_nsxv', 'vmware_nsxv3', 'vmware_dvs'] %} --config-file /etc/neutron/plugins/vmware/nsx.ini {% endif %} --config-file /etc/neutron/fwaas_driver.ini",
+    "command": "neutron-server --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/l2gw_plugin.ini {% if neutron_plugin_agent in ['openvswitch', 'linuxbridge', 'opendaylight'] %} --config-file /etc/neutron/plugins/ml2/ml2_conf.ini --config-file /etc/neutron/neutron_vpnaas.conf {% elif neutron_plugin_agent in ['vmware_nsxv', 'vmware_nsxv3', 'vmware_dvs'] %} --config-file /etc/neutron/plugins/vmware/nsx.ini {% endif %} --config-file /etc/neutron/fwaas_driver.ini {% if enable_ironic | bool %} --config-file /etc/neutron/ml2_conf_genericswitch.ini {% endif %}",
     "config_files": [
         {
             "source": "{{ container_config_directory }}/neutron.conf",
             "dest": "/etc/neutron/neutron.conf",
+            "owner": "neutron",
+            "perm": "0600"
+        },
+        {
+            "source": "{{ container_config_directory }}/l2gw_plugin.ini",
+            "dest": "/etc/neutron/l2gw_plugin.ini",
             "owner": "neutron",
             "perm": "0600"
         },
@@ -19,6 +25,14 @@
             "owner": "neutron",
             "perm": "0600"
         },
+{% if enable_ironic | bool %}
+        {
+            "source": "{{ container_config_directory }}/ml2_conf_genericswitch.ini",
+            "dest": "/etc/neutron/ml2_conf_genericswitch.ini",
+            "owner": "neutron",
+            "perm": "0600"
+        },
+{% endif %}
         {
             "source": "{{ container_config_directory }}/ml2_conf.ini",
             "dest": "/etc/neutron/plugins/ml2/ml2_conf.ini",

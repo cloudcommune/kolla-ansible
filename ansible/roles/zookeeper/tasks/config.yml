@@ -31,7 +31,6 @@
       - "{{ role_path }}/templates/{{ item.key }}.cfg.j2"
       - "{{ node_custom_config }}/{{ item.key }}.cfg"
       - "{{ node_custom_config }}/{{ item.key }}/{{ inventory_hostname }}/{{ item.key }}.cfg"
-    whitespace: False
     dest: "{{ node_config_directory }}/{{ item.key }}/{{ item.key }}.cfg"
     mode: "0660"
   become: true
@@ -54,3 +53,6 @@
   with_dict: "{{ zookeeper_services }}"
   notify:
     - Restart zookeeper container
+
+- include_tasks: check-containers.yml
+  when: kolla_action != "config"

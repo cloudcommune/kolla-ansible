@@ -93,3 +93,6 @@
     - "{{ role_path }}/templates/event_definitions.yaml.j2"
   notify:
     - "Restart mistral-event-engine container"
+
+- include_tasks: check-containers.yml
+  when: kolla_action != "config"

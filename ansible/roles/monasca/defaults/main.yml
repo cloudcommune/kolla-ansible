@@ -23,7 +23,7 @@ monasca_services:
   monasca-log-api:
     container_name: monasca_log_api
     group: monasca-log-api
-    enabled: true
+    enabled: false
     image: "{{ monasca_log_api_image_full }}"
     volumes: "{{ monasca_log_api_default_volumes + monasca_log_api_extra_volumes }}"
     dimensions: "{{ monasca_log_api_dimensions }}"
@@ -41,21 +41,21 @@ monasca_services:
   monasca-log-transformer:
     container_name: monasca_log_transformer
     group: monasca-log-transformer
-    enabled: true
+    enabled: false
     image: "{{ monasca_logstash_image_full }}"
     volumes: "{{ monasca_log_transformer_default_volumes + monasca_log_transformer_extra_volumes }}"
     dimensions: "{{ monasca_log_transformer_dimensions }}"
   monasca-log-persister:
     container_name: monasca_log_persister
     group: monasca-log-persister
-    enabled: true
+    enabled: false
     image: "{{ monasca_logstash_image_full }}"
     volumes: "{{ monasca_log_persister_default_volumes + monasca_log_persister_extra_volumes }}"
     dimensions: "{{ monasca_log_persister_dimensions }}"
   monasca-log-metrics:
     container_name: monasca_log_metrics
     group: monasca-log-metrics
-    enabled: true
+    enabled: false
     image: "{{ monasca_logstash_image_full }}"
     volumes: "{{ monasca_log_metrics_default_volumes + monasca_log_metrics_extra_volumes }}"
     dimensions: "{{ monasca_log_metrics_dimensions }}"
@@ -80,10 +80,24 @@ monasca_services:
     image: "{{ monasca_persister_image_full }}"
     volumes: "{{ monasca_persister_default_volumes + monasca_persister_extra_volumes }}"
     dimensions: "{{ monasca_persister_dimensions }}"
+  monasca-persister-1:
+    container_name: monasca_persister_1
+    group: monasca-persister
+    enabled: true
+    image: "{{ monasca_persister_image_full }}"
+    volumes: "{{ monasca_persister_1_default_volumes + monasca_persister_extra_volumes }}"
+    dimensions: "{{ monasca_persister_dimensions }}"
+  monasca-persister-2:
+    container_name: monasca_persister_2
+    group: monasca-persister
+    enabled: true
+    image: "{{ monasca_persister_image_full }}"
+    volumes: "{{ monasca_persister_2_default_volumes + monasca_persister_extra_volumes }}"
+    dimensions: "{{ monasca_persister_dimensions }}"
   monasca-agent-collector:
     container_name: monasca_agent_collector
     group: monasca-agent-collector
-    enabled: true
+    enabled: false
     image: "{{ monasca_agent_image_full }}"
     pid_mode: "host"
     volumes: "{{ monasca_agent_collector_default_volumes + monasca_agent_collector_extra_volumes }}"
@@ -91,21 +105,21 @@ monasca_services:
   monasca-agent-statsd:
     container_name: monasca_agent_statsd
     group: monasca-agent-statsd
-    enabled: true
+    enabled: false
     image: "{{ monasca_agent_image_full }}"
     volumes: "{{ monasca_agent_statsd_default_volumes + monasca_agent_statsd_extra_volumes }}"
     dimensions: "{{ monasca_agent_dimensions }}"
   monasca-agent-forwarder:
     container_name: monasca_agent_forwarder
     group: monasca-agent-forwarder
-    enabled: true
+    enabled: false
     image: "{{ monasca_agent_image_full }}"
     volumes: "{{ monasca_agent_forwarder_default_volumes + monasca_agent_forwarder_extra_volumes }}"
     dimensions: "{{ monasca_agent_dimensions }}"
   monasca-grafana:
     container_name: monasca_grafana
     group: monasca-grafana
-    enabled: true
+    enabled: false
     image: "{{ monasca_grafana_image_full }}"
     volumes: "{{ monasca_grafana_default_volumes + monasca_grafana_extra_volumes }}"
     dimensions: "{{ monasca_grafana_dimensions }}"
@@ -189,7 +203,7 @@ monasca_grafana_data_sources:
       name: "Monasca API"
       type: "monasca-datasource"
       access: "proxy"
-      url: "{{ internal_protocol }}://{{ kolla_internal_fqdn | put_address_in_context('url') }}:{{ monasca_api_port }}"
+      url: "{{ internal_protocol }}://{{ kolla_internal_vip_address | put_address_in_context('url') }}:{{ monasca_api_port }}"
       isDefault: True
       basicAuth: false
       jsonData:
@@ -215,11 +229,7 @@ monasca_log_api_image: "{{ docker_registry ~ '/' if docker_registry else '' }}{{
 monasca_log_api_tag: "{{ monasca_tag }}"
 monasca_log_api_image_full: "{{ monasca_log_api_image }}:{{ monasca_log_api_tag }}"
 
-# The logstash6 image is available for CentOS 7 and CentOS 8, and provides a
-# compatible migration point to CentOS 8, which only has Logstash 6.
-monasca_logstash_use_v6: "{{ ansible_os_family == 'RedHat' and ansible_distribution_major_version | int >= 8 }}"
-monasca_logstash_image_name: "{{ 'logstash6' if monasca_logstash_use_v6 | bool else 'logstash' }}"
-monasca_logstash_image: "{{ docker_registry ~ '/' if docker_registry else '' }}{{ docker_namespace }}/{{ kolla_base_distro }}-{{ kolla_install_type }}-{{ monasca_logstash_image_name }}"
+monasca_logstash_image: "{{ docker_registry ~ '/' if docker_registry else '' }}{{ docker_namespace }}/{{ kolla_base_distro }}-{{ kolla_install_type }}-logstash"
 monasca_logstash_tag: "{{ monasca_tag }}"
 monasca_logstash_image_full: "{{ monasca_logstash_image }}:{{ monasca_logstash_tag }}"
 
@@ -253,65 +263,61 @@ monasca_grafana_dimensions: "{{ default_container_dimensions }}"
 monasca_agent_collector_default_volumes:
   - "{{ node_config_directory }}/monasca-agent-collector/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "kolla_logs:/var/log/kolla"
   - "/sys:/sys:ro"
   - "/dev/disk/:/dev/disk:ro"
 monasca_agent_statsd_default_volumes:
   - "{{ node_config_directory }}/monasca-agent-statsd/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "kolla_logs:/var/log/kolla"
 monasca_agent_forwarder_default_volumes:
   - "{{ node_config_directory }}/monasca-agent-forwarder/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "kolla_logs:/var/log/kolla"
 monasca_api_default_volumes:
   - "{{ node_config_directory }}/monasca-api/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "kolla_logs:/var/log/kolla"
 monasca_log_api_default_volumes:
   - "{{ node_config_directory }}/monasca-log-api/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "kolla_logs:/var/log/kolla"
 monasca_log_transformer_default_volumes:
   - "{{ node_config_directory }}/monasca-log-transformer/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "kolla_logs:/var/log/kolla"
 monasca_log_persister_default_volumes:
   - "{{ node_config_directory }}/monasca-log-persister/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "kolla_logs:/var/log/kolla"
 monasca_log_metrics_default_volumes:
   - "{{ node_config_directory }}/monasca-log-metrics/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "kolla_logs:/var/log/kolla"
 monasca_thresh_default_volumes:
   - "{{ node_config_directory }}/monasca-thresh/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "monasca_thresh:/var/lib/monasca-thresh/"
   - "kolla_logs:/var/log/kolla"
 monasca_notification_default_volumes:
   - "{{ node_config_directory }}/monasca-notification/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "kolla_logs:/var/log/kolla"
 monasca_persister_default_volumes:
   - "{{ node_config_directory }}/monasca-persister/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
+  - "kolla_logs:/var/log/kolla"
+monasca_persister_1_default_volumes:
+  - "{{ node_config_directory }}/monasca-persister-1/:{{ container_config_directory }}/:ro"
+  - "/etc/localtime:/etc/localtime:ro"
+  - "kolla_logs:/var/log/kolla"
+monasca_persister_2_default_volumes:
+  - "{{ node_config_directory }}/monasca-persister-2/:{{ container_config_directory }}/:ro"
+  - "/etc/localtime:/etc/localtime:ro"
   - "kolla_logs:/var/log/kolla"
 monasca_grafana_default_volumes:
   - "{{ node_config_directory }}/monasca-grafana/:{{ container_config_directory }}/:ro"
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ '/etc/timezone:/etc/timezone:ro' if ansible_os_family == 'Debian' else '' }}"
   - "kolla_logs:/var/log/kolla/"
 
 monasca_extra_volumes: "{{ default_extra_volumes }}"

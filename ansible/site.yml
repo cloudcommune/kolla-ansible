@@ -79,7 +79,6 @@
         - enable_senlin_{{ enable_senlin | bool }}
         - enable_skydive_{{ enable_skydive | bool }}
         - enable_solum_{{ enable_solum | bool }}
-        - enable_storm_{{ enable_storm | bool }}
         - enable_swift_{{ enable_swift | bool }}
         - enable_tacker_{{ enable_tacker | bool }}
         - enable_telegraf_{{ enable_telegraf | bool }}
@@ -493,7 +492,6 @@
     - prometheus-node-exporter
     - prometheus-mysqld-exporter
     - prometheus-haproxy-exporter
-    - prometheus-memcached-exporter
     - prometheus-cadvisor
     - prometheus-alertmanager
     - prometheus-openstack-exporter
@@ -633,7 +631,6 @@
   hosts:
     - storm-worker
     - storm-nimbus
-    - '&enable_storm_True'
   serial: '{{ kolla_serial|default("0") }}'
   roles:
     - { role: storm,
@@ -643,9 +640,7 @@
 - name: Apply role karbor
   gather_facts: false
   hosts:
-    - karbor-api
-    - karbor-protection
-    - karbor-operationengine
+    - karbor
     - '&enable_karbor_True'
   serial: '{{ kolla_serial|default("0") }}'
   roles:
@@ -686,7 +681,6 @@
     - ironic-conductor
     - ironic-inspector
     - ironic-pxe
-    - ironic-ipxe
     - '&enable_ironic_True'
   serial: '{{ kolla_serial|default("0") }}'
   roles:
@@ -779,8 +773,6 @@
     - ironic-neutron-agent
     - neutron-metadata-agent
     - neutron-metering-agent
-    - neutron-bgp-dragent
-    - neutron-infoblox-ipam-agent
     - compute
     - manila-share
     - '&enable_neutron_True'
@@ -844,8 +836,6 @@
     - solum-worker
     - solum-deployer
     - solum-conductor
-    - solum-application-deployment
-    - solum-image-builder
     - '&enable_solum_True'
   serial: '{{ kolla_serial|default("0") }}'
   roles:
@@ -871,7 +861,6 @@
     - mistral-api
     - mistral-engine
     - mistral-executor
-    - mistral-event-engine
     - '&enable_mistral_True'
   serial: '{{ kolla_serial|default("0") }}'
   roles:
@@ -973,9 +962,8 @@
 - name: Apply role monasca
   gather_facts: false
   hosts:
-    - monasca-agent-collector
-    - monasca-agent-forwarder
-    - monasca-agent-statsd
+    - monasca
+    - monasca-agent
     - monasca-api
     - monasca-grafana
     - monasca-log-api
@@ -1035,9 +1023,7 @@
 - name: Apply role cyborg
   gather_facts: false
   hosts:
-    - cyborg-api
-    - cyborg-agent
-    - cyborg-conductor
+    - cyborg
     - '&enable_cyborg_True'
   serial: '{{ serial|default("0") }}'
   roles:

@@ -21,7 +21,6 @@ python virtual environment on the Ansible control host. For example:
    virtualenv /path/to/venv
    source /path/to/venv/bin/activate
    pip install -U pip
-   pip install -U setuptools
    pip install kolla-ansible
    deactivate
 

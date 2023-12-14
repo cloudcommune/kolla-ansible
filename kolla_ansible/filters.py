@@ -15,7 +15,16 @@
 import jinja2
 
 from kolla_ansible import exception
-from kolla_ansible.helpers import _call_bool_filter
+
+
+def _call_bool_filter(context, value):
+    """Pass a value through the 'bool' filter.
+
+    :param context: Jinja2 Context object.
+    :param value: Value to pass through bool filter.
+    :returns: A boolean.
+    """
+    return context.environment.call_filter("bool", value, context=context)
 
 
 @jinja2.contextfilter
@@ -54,7 +63,7 @@ def service_mapped_to_host(context, service):
 
     group = service.get("group")
     if group is not None:
-        return group in context.get("group_names") or group == "all"
+        return group in context.get("groups")
 
     raise exception.FilterError(
         "Service definition for '%s' does not have a 'group' or "

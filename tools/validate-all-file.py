@@ -126,7 +126,8 @@ def check_json_j2():
             'groups': groups(),
             'cluster_interface': 'cluster_interface',
             'storage_interface': 'storage_interface',
-            'inventory_hostname': 'hostname'
+            'inventory_hostname': 'hostname',
+            'trove_redis_template': {'stat': {'exists': False}}
         }
         data = template.render(**context)
         json.loads(data)

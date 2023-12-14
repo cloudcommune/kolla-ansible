@@ -11,9 +11,15 @@ control03
 
 # The network nodes are where your l3-agent and loadbalancers will run
 # This can be the same as a host in the control group
-[network]
-network01
-network02
+
+[network-dhcp]
+dhcp01
+
+[network-l3]
+
+[network:children]
+network-dhcp
+network-l3
 
 [compute]
 compute01
@@ -278,10 +284,6 @@ control
 # function appropriately. For example, neutron-metadata-agent must run on the
 # same host as the l3-agent and (depending on configuration) the dhcp-agent.
 
-# Elasticsearch Curator
-[elasticsearch-curator:children]
-elasticsearch
-
 # Glance
 [glance-api:children]
 glance
@@ -316,22 +318,28 @@ nova
 control
 
 [neutron-dhcp-agent:children]
-neutron
+neutron-dhcp
+
+[neutron-l2gateway-agent:children]
+neutron-dhcp
+
+[l2gateway-agent:children]
+network-dhcp
 
 [neutron-l3-agent:children]
-neutron
+neutron-l3
 
 [neutron-metadata-agent:children]
 neutron
 
 [neutron-bgp-dragent:children]
-neutron
+neutron-dhcp
 
 [neutron-infoblox-ipam-agent:children]
 neutron
 
 [neutron-metering-agent:children]
-neutron
+neutron-l3
 
 [ironic-neutron-agent:children]
 neutron

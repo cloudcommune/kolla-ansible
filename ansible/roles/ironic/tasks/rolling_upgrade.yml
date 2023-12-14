@@ -1,14 +1,10 @@
 ---
-- import_tasks: config-host.yml
-
 # Pin release version
-- import_tasks: config.yml
+- include_tasks: config.yml
   vars:
     pin_release_version: "{{ openstack_previous_release_name }}"
 
-- import_tasks: check-containers.yml
-
-- import_tasks: bootstrap_service.yml
+- include_tasks: bootstrap_service.yml
 
 # TODO(donghm): Flush_handlers to restart ironic services
 # should be run in serial nodes to decrease downtime. Update when
@@ -19,9 +15,7 @@
   meta: flush_handlers
 
 # Unpin version
-- import_tasks: config.yml
-
-- import_tasks: check-containers.yml
+- include_tasks: config.yml
 
 # Restart ironic services with unpinned release version
 - name: Flush handlers

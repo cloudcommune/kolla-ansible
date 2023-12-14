@@ -195,6 +195,41 @@
   notify:
     - Restart ceilometer-notification container
 
+- name: Check custom monasca_field_definitions.yaml exists
+  local_action: stat path="{{ node_custom_config }}/ceilometer/monasca_field_definitions.yaml"
+  register: ceilometer_monasca_field_definitions
+
+- name: Copying over monasca_field_definitions.yaml for notification service
+  vars:
+    service: "{{ ceilometer_services['ceilometer-notification'] }}"
+  copy:
+    src: "{{ node_custom_config }}/ceilometer/monasca_field_definitions.yaml"
+    dest: "{{ node_config_directory }}/ceilometer-notification/monasca_field_definitions.yaml"
+    force: True
+    mode: "0660"
+  become: true
+  when:
+    - ceilometer_monasca_field_definitions.stat.exists
+    - inventory_hostname in groups[service.group]
+    - service.enabled | bool
+  notify:
+    - Restart ceilometer-notification container
+
+- name: Copying over monasca_field_definitions.yaml for notification service
+  vars:
+    service: "{{ ceilometer_services['ceilometer-notification'] }}"
+  template:
+    src: "monasca_field_definitions.yaml.j2"
+    dest: "{{ node_config_directory }}/ceilometer-notification/monasca_field_definitions.yaml"
+    mode: "0660"
+  become: true
+  when:
+    - inventory_hostname in groups[service.group]
+    - service.enabled | bool
+    - not ceilometer_monasca_field_definitions.stat.exists
+  notify:
+    - Restart ceilometer-notification container
+
 - name: Check custom event_pipeline.yaml exists
   local_action: stat path="{{ node_custom_config }}/ceilometer/event_pipeline.yaml"
   register: ceilometer_event_pipeline_file
@@ -301,7 +336,6 @@
     - "Restart {{ item.key }} container"
 
 - name: Copying VMware vCenter CA file
-  become: true
   vars:
     service: "{{ ceilometer_services['ceilometer-compute'] }}"
   copy:
@@ -329,3 +363,6 @@
   with_dict: "{{ ceilometer_services }}"
   notify:
     - "Restart {{ item.key }} container"
+
+- include_tasks: check-containers.yml
+  when: kolla_action != "config"

@@ -1,11 +1,13 @@
 ### Skydive analyzer config file
 
 auth:
+  type: keystone
+  analyzer_username: {{ openstack_auth['username'] }}
+  analyzer_password: {{ openstack_auth['password'] }}
+
   keystone:
-    type: keystone
     auth_url: {{ keystone_internal_url }}/v3
     region_name: {{ openstack_region_name }}
-    tenant_name: {{ skydive_admin_tenant_name }}
     domain_name: Default
 
 logging:
@@ -26,21 +28,18 @@ etcd:
   embedded: false
   servers:
 {% for host in groups['etcd'] %}
-    - {{ etcd_protocol }}://{{ 'api' | kolla_address(host) | put_address_in_context('url') }}:{{ etcd_client_port }}
+    - http://{{ 'api' | kolla_address(host) | put_address_in_context('url') }}:{{ etcd_client_port }}
 {% endfor %}
 {% else %}
   embedded: true
   servers:
 {% for host in groups['skydive-analyzer'] %}
-  - {{ etcd_protocol }}://{{ 'api' | kolla_address(host) | put_address_in_context('url') }}:{{ etcd_client_port }}
+  - http://{{ 'api' | kolla_address(host) | put_address_in_context('url') }}:{{ etcd_client_port }}
 {% endfor %}
   listen: {{ api_interface_address | put_address_in_context('url') }}:{{ etcd_client_port }}
 {% endif %}
 
 analyzer:
-  auth:
-    api:
-      backend: keystone
   listen: {{ api_interface_address | put_address_in_context('url') }}:{{ skydive_analyzer_port }}
   storage:
     backend: elasticsearch

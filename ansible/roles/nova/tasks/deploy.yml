@@ -1,9 +1,11 @@
 ---
-- import_tasks: register.yml
+- include_tasks: register.yml
+  when: inventory_hostname in groups['nova-api']
 
-- import_tasks: config.yml
+- include_tasks: clone.yml
+  when: nova_dev_mode | bool
 
-- import_tasks: check-containers.yml
+- include_tasks: config.yml
 
 - name: Flush handlers
   meta: flush_handlers

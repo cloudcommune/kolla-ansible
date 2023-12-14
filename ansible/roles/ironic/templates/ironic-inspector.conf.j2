@@ -37,7 +37,7 @@ user_domain_id = {{ default_user_domain_id }}
 project_name = service
 username = {{ ironic_inspector_keystone_user }}
 password = {{ ironic_inspector_keystone_password }}
-
+region_name = {{ openstack_region_name }}
 memcache_security_strategy = ENCRYPT
 memcache_secret_key = {{ memcache_secret_key }}
 memcached_servers = {% for host in groups['memcached'] %}{{ 'api' | kolla_address(host) | put_address_in_context('memcache') }}:{{ memcached_port }}{% if not loop.last %},{% endif %}{% endfor %}
@@ -50,8 +50,6 @@ policy_file = {{ ironic_policy_file }}
 
 [database]
 connection = mysql+pymysql://{{ ironic_inspector_database_user }}:{{ ironic_inspector_database_password }}@{{ ironic_inspector_database_address }}/{{ ironic_inspector_database_name }}
-connection_recycle_time = {{ database_connection_recycle_time }}
-max_pool_size = {{ database_max_pool_size }}
 
 [processing]
 ramdisk_logs_dir = /var/log/kolla/ironic-inspector

@@ -22,6 +22,11 @@
         - "{{ node_custom_config }}/trove/"
       skip: true
 
+- name: Check if redis template directory exsits
+  local_action: stat path="{{ node_custom_config }}/trove/templates"
+  run_once: True
+  register: trove_redis_template
+
 - name: Set trove policy file
   set_fact:
     trove_policy_file: "{{ trove_policy.results.0.stat.path | basename }}"
@@ -65,6 +70,100 @@
   notify:
     - "Restart {{ item.key }} container"
 
+- name: Ensuring cloudinit direcotry  exist
+  vars:
+    need_copy_services: trove-taskmanager
+  file:
+    path: "{{ node_config_directory }}/{{ item.key }}/cloudinit"
+    state: "directory"
+    owner: "{{ config_owner_user }}"
+    group: "{{ config_owner_group }}"
+    mode: "0770"
+  become: true
+  when:
+    - inventory_hostname in groups[item.value.group]
+    - item.value.enabled | bool
+    - item.key in need_copy_services
+  with_dict: "{{ trove_services }}"
+
+- name: Copy templates for redis
+  vars:
+    need_copy_services:
+      - trove-taskmanager
+      - trove-conductor
+  copy:
+    src: "{{ node_custom_config }}/trove/templates"
+    dest: "{{ node_config_directory }}/{{ item.key }}/"
+    owner: "{{ config_owner_user }}"
+    group: "{{ config_owner_group }}"
+    mode: "0660"
+  become: true
+  when:
+    - inventory_hostname in groups[item.value.group]
+    - item.value.enabled | bool
+    - item.key in need_copy_services
+    - trove_redis_template.stat.exists
+  with_dict: "{{ trove_services }}"
+
+- name: Copying over mysql.cloudinit
+  become: true
+  template:
+    src: "{{ item }}"
+    dest: "{{ node_config_directory }}/trove-taskmanager/cloudinit/mysql.cloudinit"
+    owner: "{{ config_owner_user }}"
+    group: "{{ config_owner_group }}"
+    mode: "0660"
+  when:
+    - inventory_hostname in groups['trove-taskmanager']
+  with_first_found:
+    - files: "mysql.cloudinit.j2"
+      paths:
+        - "{{ node_custom_config }}/trove/cloudinit/"
+        - "{{ role_path }}/templates/"
+      skip: true
+  notify:
+    - "Restart trove-taskmanager container"
+
+- name: Copying over redis.cloudinit
+  become: true
+  template:
+    src: "{{ item }}"
+    dest: "{{ node_config_directory }}/trove-taskmanager/cloudinit/redis.cloudinit"
+    owner: "{{ config_owner_user }}"
+    group: "{{ config_owner_group }}"
+    mode: "0660"
+  when:
+    - inventory_hostname in groups['trove-taskmanager']
+  with_first_found:
+    - files: "redis.cloudinit.j2"
+      paths:
+        - "{{ node_custom_config }}/trove/cloudinit/"
+        - "{{ role_path }}/templates/"
+      skip: true
+  notify:
+    - "Restart trove-taskmanager container"
+
+- name: Copying over trove-guestagent.conf
+  vars:
+    services_need_confs:
+      - trove-taskmanager
+  merge_configs:
+    sources:
+      - "{{ role_path }}/templates/trove-guestagent.conf.j2"
+      - "{{ node_custom_config }}/trove-guestagent.conf"
+      - "{{ node_custom_config }}/trove/trove-guestagent.conf"
+      - "{{ node_custom_config }}/trove/{{ inventory_hostname }}/trove-guestagent.conf"
+    dest: "{{ node_config_directory }}/{{ item.key }}/trove-guestagent.conf"
+    mode: "0660"
+  become: true
+  when:
+    - item.key in services_need_confs
+    - inventory_hostname in groups[item.value.group]
+    - item.value.enabled | bool
+  with_dict: "{{ trove_services }}"
+  notify:
+    - "Restart {{ item.key }} container"
+
 - name: Copying over trove.conf
   vars:
     service_name: "{{ item.key }}"
@@ -96,3 +195,6 @@
   with_dict: "{{ trove_services }}"
   notify:
     - Restart {{ item.key }} container
+
+- include_tasks: check-containers.yml
+  when: kolla_action != "config"

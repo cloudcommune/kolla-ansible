@@ -1,0 +1,37 @@
+#cloud-config
+chpasswd:
+  list: |
+    root:trove.com
+  expire: False
+disable_root: 0
+ssh_pwauth: True
+write_files:
+- path: /etc/ceilometer/ceilometer.conf
+  content: |
+    [DEFAULT]
+    hypervisor_inspector = none
+    sample_source = openstack
+    debug = true
+    transport_url = {{ trove_transport_url | default(rpc_transport_url) }}
+
+- path: /opt/filebeat/filebeat.yml
+  content: |
+    filebeat.prospectors:
+    - type: log
+      enabled: true
+      paths:
+        - /var/log/redis/redis_slow.log
+      fields:
+        redis_log_type: redis_slow
+      multiline.pattern: ^\[
+      multiline.negate: false
+      multiline.match: after
+    filebeat.config.modules:
+      path: ${path.config}/modules.d/*.yml
+      reload.enabled: false
+    setup.template.settings:
+      index.number_of_shards: 3
+    fields:
+       guestid: '${guest_id}'
+    output.logstash:
+      hosts: {{ trove_output_logstash_hosts | default('') }}

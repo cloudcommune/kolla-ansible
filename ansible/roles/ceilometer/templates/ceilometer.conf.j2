@@ -51,4 +51,13 @@ connection_password = {{ xenserver_password }}
 [cache]
 backend = oslo_cache.memcache_pool
 enabled = True
-memcache_servers = {% for host in groups['memcached'] %}{{ 'api' | kolla_address(host) | put_address_in_context('memcache') }}:{{ memcached_port }}{% if not loop.last %},{% endif %}{% endfor %}
+#memcache_servers = {% for host in groups['memcached'] %}{{ 'api' | kolla_address(host) | put_address_in_context('memcache') }}:{{ memcached_port }}{% if not loop.last %},{% endif %}{% endfor %}
+
+
+[monasca]
+service_username = monasca
+service_password = {{ monasca_keystone_password }}
+service_auth_url = {{ keystone_internal_url }}/v3
+service_project_name = {{ monasca_control_plane_project }}
+service_domain_name = {{ default_user_domain_id }}
+service_region_name =  {{ openstack_region_name }}

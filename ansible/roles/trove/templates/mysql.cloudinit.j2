@@ -1,0 +1,9 @@
+#cloud-config
+chpasswd:
+  list: |
+    root:trove.com
+  expire: False
+ssh_pwauth: True
+runcmd:
+ - [ timedatectl, set-timezone, Asia/Shanghai ]
+ - [ chown, -R, "trove:trove", /etc/trove/conf.d ]

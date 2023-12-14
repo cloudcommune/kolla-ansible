@@ -38,8 +38,6 @@ workers = {{ openstack_service_workers }}
 
 [database]
 connection = mysql+pymysql://{{ heat_database_user }}:{{ heat_database_password }}@{{ heat_database_address }}/{{ heat_database_name }}
-connection_recycle_time = {{ database_connection_recycle_time }}
-max_pool_size = {{ database_max_pool_size }}
 max_retries = -1
 
 [keystone_authtoken]
@@ -90,7 +88,6 @@ policy_file = {{ heat_policy_file }}
 
 [clients]
 endpoint_type = internalURL
-ca_file = {{ openstack_cacert | default(omit) }}
 
 [oslo_middleware]
 enable_proxy_headers_parsing = True

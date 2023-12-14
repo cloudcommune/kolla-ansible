@@ -22,9 +22,6 @@ The host machine must satisfy the following minimum requirements:
 - 8GB main memory
 - 40GB disk space
 
-See the :kolla-ansible-doc:`support matrix <user/support-matrix>` for details
-of supported host Operating Systems.
-
 Install dependencies
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -45,17 +42,11 @@ execution, which is described in
 
 #. Install Python build dependencies:
 
-   For CentOS or RHEL 7, run:
+   For CentOS or RHEL, run:
 
    .. code-block:: console
 
       sudo yum install python-devel libffi-devel gcc openssl-devel libselinux-python
-
-   For CentOS or RHEL 8, run:
-
-   .. code-block:: console
-
-      sudo dnf install python3-devel libffi-devel gcc openssl-devel python3-libselinux
 
    For Ubuntu, run:
 
@@ -70,17 +61,11 @@ If not installing Kolla Ansible in a virtual environment, skip this section.
 
 #. Install the virtualenv package.
 
-   For CentOS or RHEL 7, run:
+   For CentOS or RHEL, run:
 
    .. code-block:: console
 
       sudo yum install python-virtualenv
-
-   For CentOS or RHEL 8, run:
-
-   .. code-block:: console
-
-      sudo dnf install python3-virtualenv
 
    For Ubuntu, run:
 
@@ -98,19 +83,18 @@ If not installing Kolla Ansible in a virtual environment, skip this section.
    The virtual environment should be activated before running any commands that
    depend on packages installed in it.
 
-#. Ensure the latest version of pip and setuptools are installed:
+#. Ensure the latest version of pip is installed:
 
    .. code-block:: console
 
       pip install -U pip
-      pip install -U setuptools
 
 #. Install `Ansible <http://www.ansible.com>`__. Currently, Kolla Ansible
-   requires Ansible 2.6 to 2.9.
+   requires Ansible 2.6+.
 
    .. code-block:: console
 
-      pip install 'ansible<2.10'
+      pip install ansible
 
 Install dependencies not using a virtual environment
 ----------------------------------------------------
@@ -131,15 +115,14 @@ If installing Kolla Ansible in a virtual environment, skip this section.
 
       sudo apt-get install python-pip
 
-#. Ensure the latest version of pip and setuptools are installed:
+#. Ensure the latest version of pip is installed:
 
    .. code-block:: console
 
       sudo pip install -U pip
-      sudo pip install -U setuptools
 
 #. Install `Ansible <http://www.ansible.com>`__. Currently, Kolla Ansible
-   requires Ansible 2.6 to 2.9.
+   requires Ansible 2.6+.
 
    For CentOS or RHEL, run:
 
@@ -152,13 +135,6 @@ If installing Kolla Ansible in a virtual environment, skip this section.
    .. code-block:: console
 
       sudo apt-get install ansible
-
-#. If the version of Ansible provided by the distribution does not meet the
-   above version requirements, install it via pip.
-
-   .. code-block:: console
-
-      sudo pip install 'ansible<2.10'
 
 Install Kolla-ansible
 ~~~~~~~~~~~~~~~~~~~~~
@@ -395,7 +371,7 @@ There are a few options that are required to deploy Kolla-Ansible:
   - Debian
   - RHEL
 
-  For newcomers, we recommend to use CentOS 7, CentOS 8 or Ubuntu 18.04.
+  For newcomers, we recommend to use CentOS 7 or Ubuntu 18.04.
 
   .. code-block:: console
 
@@ -422,6 +398,23 @@ There are a few options that are required to deploy Kolla-Ansible:
   .. code-block:: console
 
      kolla_install_type: "source"
+
+  To use DockerHub images, the default image tag has to be overridden. Images are
+  tagged with release names. For example to use stable Train images set
+
+  .. code-block:: console
+
+     openstack_release: "train"
+
+  It's important to use same version of images as kolla-ansible. That
+  means if pip was used to install kolla-ansible, that means it's latest stable
+  version so ``openstack_release`` should be set to train. If git was used with
+  master branch, DockerHub also provides daily builds of master branch (which is
+  tagged as ``master``):
+
+  .. code-block:: console
+
+     openstack_release: "master"
 
 * Networking
 
@@ -586,3 +579,4 @@ Using OpenStack
      .. code-block:: console
 
         kolla-ansible/tools/init-runonce
+

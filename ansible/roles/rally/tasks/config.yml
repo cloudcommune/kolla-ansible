@@ -72,3 +72,6 @@
   with_dict: "{{ rally_services }}"
   notify:
     - Restart rally container
+
+- include_tasks: check-containers.yml
+  when: kolla_action != "config"

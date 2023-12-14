@@ -145,3 +145,6 @@
   with_dict: "{{ designate_services }}"
   notify:
     - Restart {{ item.key }} container
+
+- include_tasks: check-containers.yml
+  when: kolla_action != "config"

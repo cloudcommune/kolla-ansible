@@ -25,7 +25,6 @@
       kolla_docker:
         name: "{{ mariadb_service.container_name }}"
         action: "stop_container"
-        ignore_missing: true
 
     # Run wsrep recovery with detach=false to block until completion. Use a
     # different container name to avoid the mariadb container being removed.
@@ -47,7 +46,7 @@
 
     - name: Copying MariaDB log file to /tmp
       become: true
-      command: "cp {{ docker_runtime_directory or '/var/lib/docker' }}/volumes/kolla_logs/_data/mariadb/mariadb.log /tmp/mariadb_tmp.log"
+      shell: "docker cp {{ mariadb_service.container_name }}:/var/log/kolla/mariadb/mariadb.log /tmp/mariadb_tmp.log"
 
     # Look for sequence number in logs. Format is:
     # WSREP: Recovered position: <UUID>:<seqno>.
@@ -73,7 +72,7 @@
       shell:
         cmd: |
           if [[ ! -z {{ hostvars[inventory_hostname]['seqno'] }} && ! -z {{ hostvars[item]['seqno'] }} &&
-          {{ hostvars[inventory_hostname]['seqno'] }} =~ ^-?[0-9]+$ && {{ hostvars[item]['seqno'] }} =~ ^-?[0-9]+$ &&
+          {{ hostvars[inventory_hostname]['seqno'] }} =~ ^[0-9]+$ && {{ hostvars[item]['seqno'] }} =~ ^[0-9]+$ &&
           {{ hostvars[inventory_hostname]['seqno'] }} -lt {{ hostvars[item]['seqno'] }} ]]; then echo {{ hostvars[item]['seqno'] }}; fi
       with_items: "{{ groups['mariadb'] }}"
       register: seqno_compare
@@ -95,13 +94,29 @@
 - set_fact:
     bootstrap_host: "{{ mariadb_recover_inventory_name }}"
 
+- name: Copying grastate.dat file from MariaDB container in bootstrap host
+  become: true
+  command: "docker cp {{ mariadb_service.container_name }}:/var/lib/mysql/grastate.dat /tmp/kolla_mariadb_grastate.dat"
+  changed_when: false
+  when:
+    - bootstrap_host is defined
+    - bootstrap_host == inventory_hostname
+
 - name: Set grastate.dat file from MariaDB container in bootstrap host
   become: true
   lineinfile:
-    dest: "{{ docker_runtime_directory or '/var/lib/docker' }}/volumes/mariadb/_data/grastate.dat"
+    dest: /tmp/kolla_mariadb_grastate.dat
     regexp: 'safe_to_bootstrap:(.*)$'
     line: 'safe_to_bootstrap: 1'
     state: present
+  when:
+    - bootstrap_host is defined
+    - bootstrap_host == inventory_hostname
+
+- name: Copying grastate.dat file to mariadb container
+  become: true
+  command: docker cp /tmp/kolla_mariadb_grastate.dat mariadb:/var/lib/mysql/grastate.dat
+  changed_when: false
   when:
     - bootstrap_host is defined
     - bootstrap_host == inventory_hostname

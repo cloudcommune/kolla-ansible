@@ -1,4 +1,31 @@
 ---
+- name: Load and persist ip6_tables module
+  include_role:
+    role: module-load
+  vars:
+    modules:
+      - {'name': ip6_tables}
+  when: neutron_services | select_services_enabled_and_mapped_to_host | list | intersect([ "neutron-l3-agent", "neutron-linuxbridge-agent", "neutron-openvswitch-agent" ]) | list | length > 0
+
+- name: Setting sysctl values
+  become: true
+  vars:
+    neutron_l3_agent: "{{ neutron_services['neutron-l3-agent'] }}"
+  sysctl: name={{ item.name }} value={{ item.value }} sysctl_set=yes
+  with_items:
+    - { name: "net.ipv4.ip_forward", value: 1}
+    - { name: "net.ipv4.conf.all.rp_filter", value: "{{ neutron_l3_agent_host_rp_filter_mode }}"}
+    - { name: "net.ipv4.conf.default.rp_filter", value: "{{ neutron_l3_agent_host_rp_filter_mode }}"}
+    - { name: "net.ipv4.neigh.default.gc_thresh1", value: "{{ neutron_l3_agent_host_ipv4_neigh_gc_thresh1 }}"}
+    - { name: "net.ipv4.neigh.default.gc_thresh2", value: "{{ neutron_l3_agent_host_ipv4_neigh_gc_thresh2 }}"}
+    - { name: "net.ipv4.neigh.default.gc_thresh3", value: "{{ neutron_l3_agent_host_ipv4_neigh_gc_thresh3 }}"}
+    - { name: "net.ipv6.neigh.default.gc_thresh1", value: "{{ neutron_l3_agent_host_ipv6_neigh_gc_thresh1 }}"}
+    - { name: "net.ipv6.neigh.default.gc_thresh2", value: "{{ neutron_l3_agent_host_ipv6_neigh_gc_thresh2 }}"}
+    - { name: "net.ipv6.neigh.default.gc_thresh3", value: "{{ neutron_l3_agent_host_ipv6_neigh_gc_thresh3 }}"}
+  when:
+    - set_sysctl | bool
+    - (neutron_l3_agent.enabled | bool and neutron_l3_agent.host_in_groups | bool)
+
 - name: Ensuring config directories exist
   become: true
   file:
@@ -38,6 +65,7 @@
     services_need_neutron_conf:
       - "ironic-neutron-agent"
       - "neutron-dhcp-agent"
+      - "neutron-l2gateway-agent"
       - "neutron-l3-agent"
       - "neutron-linuxbridge-agent"
       - "neutron-metadata-agent"
@@ -136,7 +164,6 @@
     - "Restart {{ item.key }} container"
 
 - name: Copying over sriov_agent.ini
-  become: true
   vars:
     service_name: "neutron-sriov-agent"
     neutron_sriov_agent: "{{ neutron_services[service_name] }}"
@@ -150,6 +177,63 @@
   when:
     - neutron_sriov_agent.enabled | bool
     - neutron_sriov_agent.host_in_groups | bool
+  notify:
+    - "Restart {{ service_name }} container"
+
+- name: Copying over l2gw_plugin.ini
+  become: true
+  vars:
+    service_name: "{{ item.key }}"
+    services_need_l2gw_plugin_ini:
+      - "neutron-server"
+  merge_configs:
+    sources:
+      - "{{ role_path }}/templates/l2gw_plugin.ini.j2"
+      - "{{ node_custom_config }}/neutron/l2gw_plugin.ini"
+    dest: "{{ node_config_directory }}/{{ service_name }}/l2gw_plugin.ini"
+    mode: "0660"
+  when:
+    - item.key in services_need_l2gw_plugin_ini
+    - item.value.enabled | bool
+    - item.value.host_in_groups | bool
+  with_dict: "{{ neutron_services }}"
+  notify:
+    - "Restart {{ item.key }} container"
+
+- name: Copying over l2gateway_agent.ini
+  become: true
+  vars:
+    service_name: "neutron-l2gateway-agent"
+    neutron_l2gateway_agent: "{{ neutron_services[service_name] }}"
+  merge_configs:
+    sources:
+      - "{{ role_path }}/templates/l2gateway_agent.ini.j2"
+      - "{{ node_custom_config }}/neutron/l2gateway_agent.ini"
+      - "{{ node_custom_config }}/neutron/{{ inventory_hostname }}/l2gateway_agent.ini"
+    dest: "{{ node_config_directory }}/{{ service_name }}/l2gateway_agent.ini"
+    mode: "0660"
+  when:
+    - neutron_l2gateway_agent.enabled | bool
+    - neutron_l2gateway_agent.host_in_groups | bool
+  notify:
+    - "Restart {{ service_name }} container"
+
+- name: Copying over ml2_conf_genericswitch.ini
+  become: true
+  vars:
+    service_name: "neutron-server"
+    services_need_genericswitch_plugin_ini: "{{ neutron_services[service_name] }}"
+  merge_configs:
+    sources:
+      - "{{ role_path }}/templates/ml2_conf_genericswitch.ini.j2"
+      - "{{ node_custom_config }}/neutron/ml2_conf_genericswitch.ini"
+      - "{{ node_custom_config }}/neutron/{{ inventory_hostname }}/ml2_conf_genericswitch.ini"
+    dest: "{{ node_config_directory }}/{{ service_name }}/ml2_conf_genericswitch.ini"
+    mode: "0660"
+  when:
+    - services_need_genericswitch_plugin_ini.enabled | bool
+    - services_need_genericswitch_plugin_ini.host_in_groups | bool
+    - enable_ironic | bool
   notify:
     - "Restart {{ service_name }} container"
 
@@ -306,7 +390,6 @@
   register: neutron_policy
 
 - name: Copying over nsx.ini
-  become: true
   vars:
     service_name: "neutron-server"
     neutron_server: "{{ neutron_services[service_name] }}"
@@ -388,3 +471,6 @@
     - "{{ check_extra_ml2_plugins.files }}"
   notify:
     - "Restart {{ item.0 }} container"
+
+- include_tasks: check-containers.yml
+  when: kolla_action != "config"

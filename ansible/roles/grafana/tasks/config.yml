@@ -94,3 +94,6 @@
     - "prometheus.yaml.j2"
   notify:
     - Restart grafana container
+
+- include_tasks: check-containers.yml
+  when: kolla_action != "config"

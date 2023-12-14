@@ -72,7 +72,7 @@ metricSpoutConfig:
     numThreads: 1
     groupId: "thresh-metric"
     zookeeperConnect: "{{ monasca_zookeeper_servers }}"
-    consumerId: 1
+    consumerId: {{ groups.monitoring.index(inventory_hostname) }}
     socketTimeoutMs: 30000
     socketReceiveBufferBytes: 65536
     fetchMessageMaxBytes: 1048576
@@ -86,7 +86,7 @@ metricSpoutConfig:
     refreshLeaderBackoffMs: 200
     autoOffsetReset: largest
     consumerTimeoutMs: -1
-    clientId: 1
+    clientId: {{ groups.monitoring.index(inventory_hostname) }}
     zookeeperSessionTimeoutMs: 60000
     zookeeperConnectionTimeoutMs: 60000
     zookeeperSyncTimeMs: 2000
@@ -99,7 +99,7 @@ eventSpoutConfig:
     numThreads: 1
     groupId: "thresh-event"
     zookeeperConnect: "{{ monasca_zookeeper_servers }}"
-    consumerId: 1
+    consumerId: {{ groups.monitoring.index(inventory_hostname) }}
     socketTimeoutMs: 30000
     socketReceiveBufferBytes: 65536
     fetchMessageMaxBytes: 1048576
@@ -113,7 +113,7 @@ eventSpoutConfig:
     refreshLeaderBackoffMs: 200
     autoOffsetReset: largest
     consumerTimeoutMs: -1
-    clientId: 1
+    clientId: {{ groups.monitoring.index(inventory_hostname) }}
     zookeeperSessionTimeoutMs: 60000
     zookeeperConnectionTimeoutMs: 60000
     zookeeperSyncTimeMs: 2000

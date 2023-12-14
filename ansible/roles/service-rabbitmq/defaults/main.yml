@@ -21,6 +21,5 @@ service_rabbitmq_delay: 10
 # 'user'
 # 'password'
 # 'vhost'
-# 'tags'
 # Virtual hosts in this list will also be created.
 service_rabbitmq_users: []

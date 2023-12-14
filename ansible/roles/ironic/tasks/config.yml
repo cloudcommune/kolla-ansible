@@ -1,4 +1,11 @@
 ---
+- name: Load and persist iscsi_tcp module
+  import_role:
+    role: module-load
+  vars:
+    modules:
+      - {'name': iscsi_tcp}
+
 - name: Ensuring config directories exist
   file:
     path: "{{ node_config_directory }}/{{ item.key }}"
@@ -237,3 +244,6 @@
   with_dict: "{{ ironic_services }}"
   notify:
     - "Restart {{ item.key }} container"
+
+- include_tasks: check-containers.yml
+  when: kolla_action != "config"

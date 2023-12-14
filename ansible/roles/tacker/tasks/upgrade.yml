@@ -30,11 +30,9 @@
   when:
     - inventory_hostname not in tacker_hosts
 
-- import_tasks: config.yml
+- include_tasks: config.yml
 
-- import_tasks: check-containers.yml
-
-- import_tasks: bootstrap_service.yml
+- include_tasks: bootstrap_service.yml
 
 - name: Flush handlers
   meta: flush_handlers

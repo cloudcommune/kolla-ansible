@@ -12,7 +12,13 @@
             "dest": "/etc/trove/{{ trove_policy_file }}",
             "owner": "trove",
             "perm": "0600"
-        }{% endif %}
+        }{% endif %}{% if trove_redis_template.stat.exists | bool %},
+    {
+            "source": "{{ container_config_directory }}/templates",
+            "dest": "/etc/trove/templates",
+            "owner": "trove",
+            "perm": "0700"
+    }{% endif %}
     ],
     "permissions": [
         {

@@ -29,7 +29,7 @@ username = {{ designate_keystone_user }}
 password = {{ designate_keystone_password }}
 http_connect_timeout = 60
 service_token_roles_required = True
-
+region_name = {{ openstack_region_name }}
 memcache_security_strategy = ENCRYPT
 memcache_secret_key = {{ memcache_secret_key }}
 memcached_servers = {% for host in groups['memcached'] %}{{ 'api' | kolla_address(host) | put_address_in_context('memcache') }}:{{ memcached_port }}{% if not loop.last %},{% endif %}{% endfor %}
@@ -102,8 +102,10 @@ policy_file = {{ designate_policy_file }}
 [coordination]
 {% if designate_coordination_backend == 'redis' %}
 backend_url = {{ redis_connection_string }}
+{% elif designate_coordination_backend == 'etcd' %}
+# NOTE(yoctozepto): etcd-compatible tooz drivers do not support multiple endpoints here (verified in Stein, Train)
+# NOTE(yoctozepto): we must use etcd3gw (aka etcd3+http) due to issues with alternative (etcd3) and eventlet (as used by designate)
+# see https://bugs.launchpad.net/kolla-ansible/+bug/1854932
+# and https://review.opendev.org/466098 for details
+backend_url = etcd3+http://{{ 'api' | kolla_address(groups['etcd'][0]) | put_address_in_context('url') }}:{{ etcd_client_port }}
 {% endif %}
-{#
-  NOTE(yoctozepto): etcd is not supported due to lack of group membership
-                    support via tooz, see https://launchpad.net/bugs/1872205
-#}

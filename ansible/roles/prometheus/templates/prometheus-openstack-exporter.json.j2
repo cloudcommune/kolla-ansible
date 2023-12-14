@@ -10,6 +10,11 @@
     ],
     "permissions": [
         {
+            "path": "/data",
+            "owner": "prometheus:kolla",
+            "recurse": true
+        },
+        {
             "path": "/var/log/kolla/prometheus",
             "owner": "prometheus:kolla",
             "recurse": true

@@ -5,6 +5,7 @@
     service_ks_register_auth: "{{ openstack_magnum_auth }}"
     service_ks_register_services: "{{ magnum_ks_services }}"
     service_ks_register_users: "{{ magnum_ks_users }}"
+  tags: always
 
 - name: Creating Magnum trustee domain
   become: true
@@ -16,7 +17,6 @@
       auth: "{{ openstack_magnum_auth }}"
       endpoint_type: "{{ openstack_interface }}"
       cacert: "{{ openstack_cacert }}"
-      region_name: "{{ openstack_region_name }}"
   register: trustee_domain
   run_once: True
 
@@ -31,7 +31,6 @@
       auth: "{{ openstack_magnum_auth }}"
       endpoint_type: "{{ openstack_interface }}"
       cacert: "{{ openstack_cacert }}"
-      region_name: "{{ openstack_region_name }}"
   run_once: True
 
 - name: Creating Magnum trustee user role
@@ -45,5 +44,4 @@
       auth: "{{ openstack_magnum_auth }}"
       endpoint_type: "{{ openstack_interface }}"
       cacert: "{{ openstack_cacert }}"
-      region_name: "{{ openstack_region_name }}"
   run_once: True

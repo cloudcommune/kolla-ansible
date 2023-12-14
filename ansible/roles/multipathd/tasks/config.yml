@@ -1,4 +1,11 @@
 ---
+- name: Load and persist dm-multipath module
+  import_role:
+    role: module-load
+  vars:
+    modules:
+      - {'name': dm-multipath}
+
 - name: Ensuring config directories exist
   file:
     path: "{{ node_config_directory }}/{{ item.key }}"
@@ -37,3 +44,6 @@
   with_dict: "{{ multipathd_services }}"
   notify:
     - Restart multipathd container
+
+- include_tasks: check-containers.yml
+  when: kolla_action != "config"

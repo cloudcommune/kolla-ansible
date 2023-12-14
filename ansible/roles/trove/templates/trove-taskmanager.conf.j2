@@ -19,21 +19,12 @@ trove_auth_url = {{ keystone_internal_url }}/v3
 
 os_region_name = {{ openstack_region_name }}
 
-nova_compute_endpoint_type = internalURL
-neutron_endpoint_type = internalURL
-cinder_endpoint_type = internalURL
-swift_endpoint_type = internalURL
-glance_endpoint_type = internalURL
-trove_endpoint_type = internalURL
-
 network_driver = trove.network.neutron.NeutronDriver
 
 network_label_regex = .*
 
 [database]
 connection = mysql+pymysql://{{ trove_database_user }}:{{ trove_database_password }}@{{ trove_database_address }}/{{ trove_database_name }}
-connection_recycle_time = {{ database_connection_recycle_time }}
-max_pool_size = {{ database_max_pool_size }}
 max_retries = -1
 
 [oslo_messaging_notifications]

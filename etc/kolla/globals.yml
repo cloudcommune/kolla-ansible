@@ -17,8 +17,8 @@
 # Valid options are [ binary, source ]
 #kolla_install_type: "binary"
 
-# Do not override this unless you know what you are doing.
-#openstack_release: "train"
+# Valid option is Docker repository tag
+#openstack_release: ""
 
 # Docker image tag used by default.
 #openstack_tag: "{{ openstack_release ~ openstack_tag_suffix }}"
@@ -55,16 +55,14 @@
 ################
 # Docker options
 ################
+# Below is an example of a private repository with authentication. Note the
+# Docker registry password can also be set in the passwords.yml file.
 
-# Custom docker registry settings:
-#docker_registry:
-#docker_registry_insecure: "{{ 'yes' if docker_registry else 'no' }}"
-#docker_registry_username:
-# docker_registry_password is set in the passwords.yml file.
-
-# Namespace of images:
-#docker_namespace: "kolla"
-
+#docker_registry: "172.16.0.10:4000"
+#docker_namespace: "companyname"
+#docker_registry_insecure: "yes"
+#docker_registry_username: "sam"
+#docker_registry_password: "correcthorsebatterystaple"
 # Docker client timeout in seconds.
 #docker_client_timeout: 120
 
@@ -260,7 +258,6 @@
 #enable_designate: "no"
 #enable_destroy_images: "no"
 #enable_elasticsearch: "{{ 'yes' if enable_central_logging | bool or enable_osprofiler | bool or enable_skydive | bool or enable_monasca | bool else 'no' }}"
-#enable_elasticsearch_curator: "no"
 #enable_etcd: "no"
 #enable_fluentd: "yes"
 #enable_freezer: "no"
@@ -322,6 +319,7 @@
 #enable_neutron_sriov: "no"
 #enable_neutron_dvr: "no"
 #enable_neutron_fwaas: "no"
+#enable_neutron_l2gw: "no"
 #enable_neutron_qos: "no"
 #enable_neutron_agent_ha: "no"
 #enable_neutron_bgp_dragent: "no"
@@ -362,7 +360,7 @@
 #enable_vitrage: "no"
 #enable_vmtp: "no"
 #enable_watcher: "no"
-#enable_zookeeper: "{{ enable_kafka | bool or enable_storm | bool }}"
+#enable_zookeeper: "{{ enable_kafka | bool }}"
 #enable_zun: "no"
 
 ##################
@@ -501,8 +499,8 @@
 # Valid options are [ bind9 ]
 #designate_backend: "bind9"
 #designate_ns_record: "sample.openstack.org"
-# Valid options are [ '', redis ]
-#designate_coordination_backend: "{{ 'redis' if enable_redis|bool else '' }}"
+# Valid options are [ '', redis, etcd ]
+#designate_coordination_backend: "{{ 'redis' if enable_redis|bool else 'etcd' if enable_etcd|bool else '' }}"
 
 ########################
 # Nova - Compute Options

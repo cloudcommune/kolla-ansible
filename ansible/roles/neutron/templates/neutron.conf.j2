@@ -97,8 +97,6 @@ root_helper = sudo neutron-rootwrap /etc/neutron/rootwrap.conf
 
 [database]
 connection = mysql+pymysql://{{ neutron_database_user }}:{{ neutron_database_password }}@{{ neutron_database_address }}/{{ neutron_database_name }}
-connection_recycle_time = {{ database_connection_recycle_time }}
-max_pool_size = {{ database_max_pool_size }}
 max_retries = -1
 
 [keystone_authtoken]
@@ -110,14 +108,11 @@ user_domain_id = {{ default_user_domain_id }}
 project_name = service
 username = {{ neutron_keystone_user }}
 password = {{ neutron_keystone_password }}
-
+region_name = {{ openstack_region_name }}
 memcache_security_strategy = ENCRYPT
 memcache_secret_key = {{ memcache_secret_key }}
 
 memcached_servers = {% for host in groups['memcached'] %}{{ 'api' | kolla_address(host) | put_address_in_context('memcache') }}:{{ memcached_port }}{% if not loop.last %},{% endif %}{% endfor %}
-
-# Workaround for https://bugs.launchpad.net/keystonemiddleware/+bug/1883659
-memcache_use_advanced_pool = True
 
 [oslo_messaging_notifications]
 transport_url = {{ notify_transport_url }}
@@ -134,6 +129,11 @@ drivers = ovs
 
 [flowclassifier]
 drivers = ovs
+{% endif %}
+
+{% if enable_octavia | bool %}
+[octavia]
+base_url = {{ internal_protocol }}://{{ octavia_internal_fqdn | put_address_in_context('url') }}:{{ octavia_api_port }}
 {% endif %}
 
 {% if enable_designate | bool %}

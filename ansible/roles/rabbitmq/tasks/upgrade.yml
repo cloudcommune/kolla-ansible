@@ -16,9 +16,7 @@
   when: inventory_hostname in groups[role_rabbitmq_groups]
   register: rabbitmq_differs
 
-- import_tasks: config.yml
-
-- import_tasks: check-containers.yml
+- include_tasks: config.yml
 
 - name: Stopping all rabbitmq instances but the first node
   become: true

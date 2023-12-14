@@ -46,12 +46,6 @@ options:
     default: None
     required: True
     type: str
-  whitespace:
-    description:
-      - Whether whitespace characters should be used around equal signs
-    default: True
-    required: False
-    type: bool
 author: Sam Yaple
 '''
 
@@ -73,11 +67,10 @@ Merge multiple configs:
 
 class OverrideConfigParser(iniparser.BaseParser):
 
-    def __init__(self, whitespace=True):
+    def __init__(self):
         self._cur_sections = collections.OrderedDict()
         self._sections = collections.OrderedDict()
         self._cur_section = None
-        self._whitespace = ' ' if whitespace else ''
 
     def assignment(self, key, value):
         if self._cur_section is None:
@@ -114,20 +107,12 @@ class OverrideConfigParser(iniparser.BaseParser):
         def write_key_value(key, values):
             for v in values:
                 if not v:
-                    fp.write('{key}{ws}=\n'.format(
-                        key=key, ws=self._whitespace))
+                    fp.write('{} =\n'.format(key))
                 for index, value in enumerate(v):
                     if index == 0:
-                        fp.write('{key}{ws}={ws}{value}\n'.format(
-                            key=key,
-                            ws=self._whitespace,
-                            value=value))
+                        fp.write('{} = {}\n'.format(key, value))
                     else:
-                        indent_size = len(key) + len(self._whitespace) * 2 + 1
-                        ws_indent = ' ' * indent_size
-                        fp.write('{ws_indent}{value}\n'.format(
-                            ws_indent=ws_indent,
-                            value=value))
+                        fp.write('{}   {}\n'.format(len(key)*' ', value))
 
         def write_section(section):
             for key, values in section.items():
@@ -173,8 +158,7 @@ class ActionModule(action.ActionBase):
         if not isinstance(sources, list):
             sources = [sources]
 
-        config = OverrideConfigParser(
-            whitespace=self._task.args.get('whitespace', True))
+        config = OverrideConfigParser()
 
         for source in sources:
             self.read_config(source, config)
@@ -195,7 +179,6 @@ class ActionModule(action.ActionBase):
 
             new_task = self._task.copy()
             new_task.args.pop('sources', None)
-            new_task.args.pop('whitespace', None)
 
             new_task.args.update(
                 dict(

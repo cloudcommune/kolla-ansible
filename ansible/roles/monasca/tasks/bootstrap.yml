@@ -36,7 +36,7 @@
   when:
     - not use_preconfigured_databases | bool
 
-- import_tasks: bootstrap_service.yml
+- include_tasks: bootstrap_service.yml
 
 # NOTE(dszumski): Monasca is not yet compatible with InfluxDB > 1.1.10, which means
 # that the official Ansible modules for managing InfluxDB don't work [1].
@@ -51,11 +51,7 @@
   register: monasca_influxdb_database
   changed_when: False
 
-- name: Creating monasca influxdb database
-  become: true
-  command: "docker exec influxdb influx -host {{ monasca_influxdb_address }} -port {{ monasca_influxdb_http_port }} -execute 'CREATE DATABASE {{ monasca_influxdb_name }} WITH DURATION {{ monasca_influxdb_retention_policy.duration }} REPLICATION  {{ monasca_influxdb_retention_policy.replication_count }} NAME {{ monasca_influxdb_retention_policy.name }}'"
-  run_once: True
-  delegate_to: "{{ groups['influxdb'][0] }}"
+- include_tasks: create_influxdb_databases.yml
   when: monasca_influxdb_name not in monasca_influxdb_database.stdout_lines
 
 # NOTE(dszumski): The Monasca APIs write logs and messages to Kafka. Since

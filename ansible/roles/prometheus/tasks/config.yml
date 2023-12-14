@@ -140,3 +140,6 @@
     - "{{ role_path }}/templates/prometheus-blackbox-exporter.yml.j2"
   notify:
     - Restart prometheus-blackbox-exporter container
+
+- include_tasks: check-containers.yml
+  when: kolla_action != "config"

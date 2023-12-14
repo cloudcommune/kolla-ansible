@@ -1,4 +1,16 @@
 ---
+- name: Setting sysctl values
+  become: true
+  sysctl: name={{ item.name }} value={{ item.value }} sysctl_set=yes
+  with_items:
+    - { name: "net.bridge.bridge-nf-call-iptables", value: 1}
+    - { name: "net.bridge.bridge-nf-call-ip6tables", value: 1}
+    - { name: "net.ipv4.conf.all.rp_filter", value: "{{ nova_compute_host_rp_filter_mode }}"}
+    - { name: "net.ipv4.conf.default.rp_filter", value: "{{ nova_compute_host_rp_filter_mode }}"}
+  when:
+    - set_sysctl | bool
+    - inventory_hostname in groups[nova_cell_compute_group]
+
 - name: Ensuring config directories exist
   become: true
   file:
@@ -98,11 +110,39 @@
   notify:
     - Restart nova-libvirt container
 
-- name: Copying over libvirt TLS keys
-  include_tasks: config-libvirt-tls.yml
+- name: Copying over libvirt TLS keys (nova-libvirt)
+  include_tasks: "config-libvirt-tls.yml"
+  vars:
+    service: "{{ nova_cell_services['nova-libvirt'] }}"
+    service_name: nova-libvirt
+    file: "{{ item }}"
   when:
+    - inventory_hostname in groups[service.group]
+    - service.enabled | bool
     - libvirt_tls | bool
     - libvirt_tls_manage_certs | bool
+  with_items:
+    - cacert.pem
+    - servercert.pem
+    - serverkey.pem
+    - clientcert.pem
+    - clientkey.pem
+
+- name: Copying over libvirt TLS keys (nova-compute)
+  include_tasks: "config-libvirt-tls.yml"
+  vars:
+    service: "{{ nova_cell_services['nova-compute'] }}"
+    service_name: nova-compute
+    file: "{{ item }}"
+  when:
+    - inventory_hostname in groups[service.group]
+    - service.enabled | bool
+    - libvirt_tls | bool
+    - libvirt_tls_manage_certs | bool
+  with_items:
+    - cacert.pem
+    - clientcert.pem
+    - clientkey.pem
 
 - name: Copying files for nova-ssh
   become: true
@@ -171,3 +211,6 @@
   with_dict: "{{ nova_cell_services }}"
   notify:
     - "Restart {{ item.key }} container"
+
+- include_tasks: check-containers.yml
+  when: kolla_action != "config"

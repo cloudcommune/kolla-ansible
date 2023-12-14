@@ -1,18 +1,6 @@
 # Provide input/output streams for transforming Monasca logs.
 # Filters should be provided in other configuration files.
 
-{% if monasca_logstash_use_v6 | bool %}
-input {
-    kafka {
-        bootstrap_servers => "{{ monasca_kafka_servers }}"
-        topics => ["{{ monasca_raw_logs_topic }}"]
-        group_id => "log_transformer"
-        consumer_threads => "{{ monasca_log_pipeline_threads }}"
-        codec => json
-    }
-}
-{% else %}
-{# Logstash 2 #}
 input {
     kafka {
         zk_connect => "{{ monasca_zookeeper_servers }}"
@@ -22,7 +10,6 @@ input {
         consumer_threads => "{{ monasca_log_pipeline_threads }}"
     }
 }
-{% endif %}
 
 filter {
     # Update the timestamp of the event based on the time in the message.
@@ -50,16 +37,6 @@ filter {
     }
 }
 
-{% if monasca_logstash_use_v6 | bool %}
-output {
-    kafka {
-        codec => json
-        bootstrap_servers => "{{ monasca_kafka_servers }}"
-        topic_id => "{{ monasca_transformed_logs_topic }}"
-    }
-}
-{% else %}
-{# Logstash 2 #}
 output {
     kafka {
         bootstrap_servers => "{{ monasca_kafka_servers }}"
@@ -68,4 +45,3 @@ output {
         workers => {{ monasca_log_pipeline_threads|int }}
     }
 }
-{% endif %}

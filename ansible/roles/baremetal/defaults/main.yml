@@ -4,7 +4,7 @@ enable_docker_repo: true
 
 # Docker APT repository configuration.
 docker_apt_url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}"
-docker_apt_repo: "deb {{ docker_apt_url }} {{ ansible_distribution_release }} stable"
+docker_apt_repo: "deb {{ docker_apt_url }} {{ ansible_lsb.codename }} stable"
 docker_apt_key_file: "gpg"
 docker_apt_key_id: "0EBFCD88"
 docker_apt_package: "docker-ce"
@@ -30,7 +30,7 @@ enable_host_ntp: False
 
 change_selinux: True
 
-selinux_state: "permissive"
+selinux_state: "disabled"
 
 docker_storage_driver: ""
 docker_custom_option: ""
@@ -64,8 +64,6 @@ debian_pkg_install:
  - "{% if virtualenv is not none %}python{% if host_python_major_version == '3' %}3{% endif %}-virtualenv{% endif %}"
  - "{% if enable_host_ntp | bool %}ntp{% endif %}"
  - "{% if enable_ceph_nfs|bool %}rpcbind{% endif %}"
- - "{% if enable_multipathd|bool %}sg3-utils-udev{% endif %}"
- - "{% if not docker_disable_default_iptables_rules | bool %}iptables{% endif %}"
 
 redhat_pkg_install:
  - "{{ docker_yum_package }}"
@@ -75,20 +73,17 @@ redhat_pkg_install:
  - "{% if virtualenv is not none %}python{{ host_python_major_version }}-virtualenv{% endif %}"
  - "{% if enable_host_ntp | bool %}ntp{% endif %}"
  - sudo
- - "{% if not docker_disable_default_iptables_rules | bool %}iptables{% endif %}"
 
 ubuntu_pkg_removals:
  - lxd
  - lxc
  - libvirt-bin
  - open-iscsi
- - "{% if enable_chrony | bool %}chrony{% endif %}"
 
 redhat_pkg_removals:
  - libvirt
  - libvirt-daemon
  - iscsi-initiator-utils
- - "{% if enable_chrony | bool %}chrony{% endif %}"
 
 # Path to a virtualenv in which to install python packages. If None, a
 # virtualenv will not be used.

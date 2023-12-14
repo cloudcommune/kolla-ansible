@@ -12,8 +12,6 @@ host = {{ api_interface_address }}
 
 [database]
 connection = mysql+pymysql://{{ aodh_database_user }}:{{ aodh_database_password }}@{{ aodh_database_address }}/{{ aodh_database_name }}
-connection_recycle_time = {{ database_connection_recycle_time }}
-max_pool_size = {{ database_max_pool_size }}
 
 [keystone_authtoken]
 memcache_security_strategy = ENCRYPT
@@ -27,6 +25,7 @@ username = {{ aodh_keystone_user }}
 password = {{ aodh_keystone_password }}
 auth_url = {{ keystone_admin_url }}
 auth_type = password
+region_name = {{ openstack_region_name }}
 
 [oslo_middleware]
 enable_proxy_headers_parsing = True

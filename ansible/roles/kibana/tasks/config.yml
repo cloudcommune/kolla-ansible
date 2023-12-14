@@ -42,3 +42,6 @@
     - kibana.enabled | bool
   notify:
     - Restart kibana container
+
+- include_tasks: check-containers.yml
+  when: kolla_action != "config"

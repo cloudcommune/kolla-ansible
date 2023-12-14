@@ -189,6 +189,7 @@ assuming that you have services using ``nova.conf`` running on hosts
 called ``controller-0001``, ``controller-0002`` and ``controller-0003``:
 
 * ``/etc/kolla/config/nova.conf``
+* ``/etc/kolla/config/nova/nova.conf``
 * ``/etc/kolla/config/nova/controller-0001/nova.conf``
 * ``/etc/kolla/config/nova/controller-0002/nova.conf``
 * ``/etc/kolla/config/nova/controller-0003/nova.conf``
@@ -265,34 +266,27 @@ operator needs to create ``/etc/kolla/config/global.conf`` with content:
    [database]
    max_pool_size = 100
 
-OpenStack policy customisation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In case the operators want to customize ``policy.json`` file, they should
+create a full policy file for specific project in the same directory like above
+and Kolla will overwrite default policy file with it. Be aware, with some
+projects are keeping full policy file in source code, operators just need to
+copy it but with some others are defining default rules in codebase, they have
+to generate it.
 
-OpenStack services allow customisation of policy. Since the Queens release,
-default policy configuration is defined within the source code for each
-service, meaning that operators only need to override rules they wish to
-change. Projects typically provide documentation on their default policy
-configuration, for example, :keystone-doc:`Keystone <configuration/policy>`.
+For example to overwrite ``policy.json`` file of Neutron project, the operator
+needs to grab ``policy.json`` from Neutron project source code, update rules
+and then put it to ``/etc/kolla/config/neutron/policy.json``.
 
-Policy can be customised via JSON or YAML files. As of the Wallaby release, the
-JSON format is deprecated in favour of YAML. One major benefit of YAML is that
-it allows for the use of comments.
+.. note::
 
-For example, to customise the Neutron policy in YAML format, the operator
-should add the customised rules in ``/etc/kolla/config/neutron/policy.yaml``.
+   Currently kolla-ansible only support JSON and YAML format for policy file.
 
-The operator can make these changes after services have been deployed by using
-the following command:
+The operator can make these changes after services were already deployed by
+using following command:
 
 .. code-block:: console
 
-   kolla-ansible deploy
-
-In order to present a user with the correct interface, Horizon includes policy
-for other services. Customisations made to those services may need to be
-replicated in Horizon. For example, to customise the Neutron policy in YAML
-format for Horizon, the operator should add the customised rules in
-``/etc/kolla/config/horizon/neutron_policy.yaml``.
+   kolla-ansible reconfigure
 
 IP Address Constrained Environments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -16,7 +16,7 @@ function wait_for_placement_resources {
     local expected_count=1
     local resource_class="RC0"
 
-    curl --fail -L -o jq https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
+    curl -L -o jq https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
     chmod +x jq
 
     # TODO(mgoddard): switch to Placement OSC plugin, once it exists
@@ -35,7 +35,7 @@ function wait_for_placement_resources {
     for i in $(seq 1 120); do
         # Fetch provider UUIDs from Placement
         local providers
-        providers=$(curl --fail -sH "X-Auth-Token: $token" $endpoint/resource_providers \
+        providers=$(curl -sH "X-Auth-Token: $token" $endpoint/resource_providers \
             | ./jq -r '.resource_providers[].uuid')
 
         local p
@@ -99,16 +99,12 @@ function test_ironic_logged {
     . ~/openstackclient-venv/bin/activate
 
     # Smoke test ironic API.
-    local baremetal_driver_list
-    baremetal_driver_list=$(openstack baremetal driver list)
-    openstack baremetal node list
-    openstack baremetal port list
-
-    # Sanity check.
-    if ! echo "$baremetal_driver_list" | grep fake-hardware; then
+    if ! openstack baremetal driver list | grep fake-hardware; then
         echo "No active conductors with fake-hardware driver"
         exit 1
     fi
+    openstack baremetal node list
+    openstack baremetal port list
 
     create_resources
     wait_for_placement_resources
@@ -131,14 +127,12 @@ function test_ironic_logged {
 
 function test_ironic {
     echo "Testing Ironic"
-    test_ironic_logged > /tmp/logs/ansible/test-ironic 2>&1
-    result=$?
-    if [[ $result != 0 ]]; then
+    if ! test_ironic_logged > /tmp/logs/ansible/test-ironic 2>&1; then
         echo "Testing Ironic failed. See ansible/test-ironic for details"
+        return 1
     else
         echo "Successfully tested Ironic. See ansible/test-ironic for details"
     fi
-    return $result
 }
 
 test_ironic
